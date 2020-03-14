@@ -1,6 +1,6 @@
 'use strict';
 module.exports = {
-  up: (queryInterface, Sequelize) => {
+  up: async (queryInterface, Sequelize) => {
     return queryInterface.createTable('users', {
       id: {
         allowNull    : false,
@@ -34,7 +34,7 @@ module.exports = {
       return queryInterface.addIndex('users', ['user_id']);
     });
   },
-  down: (queryInterface, Sequelize) => {
+  down: async (queryInterface, Sequelize) => {
     return queryInterface.dropTable('users');
   }
 };

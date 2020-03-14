@@ -5,6 +5,7 @@ const webpack           = require('webpack');
 const merge             = require('webpack-merge');
 const Dotenv            = require('dotenv-webpack');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
+const HardSourceWebpackPlugin = require('hard-source-webpack-plugin');
 
 const config = process.env.NODE_ENV !== 'production' ?
   require('./webpack.dev.config') :
@@ -42,7 +43,8 @@ const common = {
     new HtmlWebpackPlugin({
       title: 'bot-house'
     }),
-    new webpack.NamedModulesPlugin()
+    new webpack.NamedModulesPlugin(),
+    new HardSourceWebpackPlugin()
   ]
 };
 

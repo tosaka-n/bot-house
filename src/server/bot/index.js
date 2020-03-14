@@ -4,13 +4,12 @@ const deepFreeze = require('deep-freeze');
 const bots = require('../db/bots');
 const channels = require('../db/channels');
 const wrappedEval = require('../utils/eval');
-const { rtm, web, getBotId, CLIENT_EVENTS } = require('../slack');
+const { rtm, web, getBotId } = require('../slack');
 
 // bot modules
 const modules = require('./modules');
 
-rtm.on(CLIENT_EVENTS.RTM.RAW_MESSAGE, async(e) => {
-  const res = JSON.parse(e);
+rtm.on('message', async(res) => {
 
   if (res.type !== 'message') return;
 
@@ -51,11 +50,11 @@ rtm.on(CLIENT_EVENTS.RTM.RAW_MESSAGE, async(e) => {
           };
         });
 
-        return web.chat.postMessage(
-          res.channel,
-          `🤖 ${list.length} active bots in this channel`,
-          { attachments }
-        );
+        return web.chat.postMessage({
+          channel: res.channel,
+          text: `🤖 ${list.length} active bots in this channel`,
+          attachments
+        });
       }
     }
   }
@@ -67,7 +66,7 @@ rtm.on(CLIENT_EVENTS.RTM.RAW_MESSAGE, async(e) => {
     try {
 
       // channe_id(from slack) -> search channel_name(from channels)
-      const { channel } = await web.channels.info(res.channel);
+      const { channel } = await web.channels.info({channel: res.channel});
       const { dataValues: channelValue } = await channels.find({ name: channel.name });
 
       // TODO: join channels and bots
@@ -145,7 +144,8 @@ rtm.on(CLIENT_EVENTS.RTM.RAW_MESSAGE, async(e) => {
       console.log(e);
       bots.update(id, { latest_error: e.toString() });
 
-      return web.chat.postMessage(res.channel, 'an error occurred', {
+      return web.chat.postMessage({
+        channel: res.channel, text: 'an error occurred',
         attachments: [{
           author_name: username,
           text       : `😵 ${e.toString()}: <${process.env.SITE_URI}/#/bots/${id}|URL>`,
@@ -156,24 +156,25 @@ rtm.on(CLIENT_EVENTS.RTM.RAW_MESSAGE, async(e) => {
 
     try {
       if (Object.prototype.toString.call(message) === '[object Object]' && message.text) {
-        return web.chat.postMessage(
-          res.channel,
-          message.text,
-          {
-            attachments: message.attachments,
-            username,
-            ...icon.includes('http') ?
-              { icon_url: icon } :
-              { icon_emoji: icon }
-          }
-        );
+        return web.chat.postMessage({
+          channel: res.channel,
+          text: message.text,
+          attachments: message.attachments,
+          username,
+          ...icon.includes('http') ?
+            { icon_url: icon } :
+            { icon_emoji: icon }
+        });
       }
 
-      rtm._chat.postMessage(res.channel, message, {
-        username,
-        ...icon.includes('http') ?
-          { icon_url: icon } :
-          { icon_emoji: icon }
+      web.chat.postMessage(
+        {
+          channel: res.channel,
+          text: message,
+          username,
+          ...icon.includes('http') ?
+            { icon_url: icon } :
+            { icon_emoji: icon }
       });
 
       bots.update(id, { latest_error: null });

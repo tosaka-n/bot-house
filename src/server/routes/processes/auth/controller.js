@@ -12,17 +12,19 @@ async function cb(req, res) {
     }
 
     const access = await web.oauth.access(
-      process.env.SLACK_CLIENT_ID,
-      process.env.SLACK_CLIENT_SECRET,
-      req.query.code,
-      { redirect_uri: `${process.env.SITE_URI}/auth/cb` }
+      {
+        client_id: process.env.SLACK_CLIENT_ID,
+        client_secret: process.env.SLACK_CLIENT_SECRET,
+        code: req.query.code,
+        redirect_uri: `${process.env.SITE_URI}/auth/cb`
+      }
     );
 
     const {
       id: user_id,
       profile,
       real_name
-    } = (await web.users.info(access.user_id)).user;
+    } = (await web.users.info({user: access.user_id})).user;
 
     const exsited = !!(await users.find({ user_id }));
 
